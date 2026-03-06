@@ -1,10 +1,9 @@
 using ExchangeMapper.API.Middleware;
-using ExchangeMapper.Application.Interfaces;
 using ExchangeMapper.Application.Services;
-using ExchangeMapper.Application.Validators;
+using ExchangeMapper.Application.Interfaces.Repositories;
+using ExchangeMapper.Application.Interfaces.Services;
 using ExchangeMapper.Infrastructure.Persistence;
 using ExchangeMapper.Infrastructure.Persistence.Repositories;
-using FluentValidation;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
@@ -26,7 +25,7 @@ builder.Services.AddScoped<IInstitutionRepository, InstitutionRepository>();
 builder.Services.AddScoped<IStudyProgramRepository, StudyProgramRepository>();
 builder.Services.AddScoped<IStudyProfileRepository, StudyProfileRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddValidatorsFromAssemblyContaining<OnboardingRequestValidator>();
+builder.Services.AddScoped<IInstitutionService, InstitutionService>();
 
 builder.Services.AddCors(options =>
 {

@@ -2,9 +2,10 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { AxiosError } from 'axios'
 import { api } from '@/services/api'
 import { useAuthStore } from '@/stores/auth.store'
-import type { BaseResponse } from '@/types/api.types'
+import type { ProblemDetails } from '@/types/api.types'
 import type { InstitutionDto, StudyProgramDto, StudyProfileDto } from '@/types/institution.types'
 
 type UserRole = 'Student' | 'Coordinator'
@@ -156,8 +157,8 @@ function normalizeProfile(dto: StudyProfileApiDto): StudyProfileDto {
 
 async function loadInstitutions() {
   try {
-    const response = await api.get<BaseResponse<InstitutionApiDto[]>>('/institutions')
-    institutions.value = (response.data.data ?? []).map(normalizeInstitution)
+    const response = await api.get<InstitutionApiDto[]>('/institutions')
+    institutions.value = (response.data ?? []).map(normalizeInstitution)
   } catch {
     errorMessage.value = t('errors.unexpected')
   }
@@ -184,8 +185,8 @@ function enableNewInstitution() {
 
 async function loadPrograms(institutionId: string) {
   try {
-    const response = await api.get<BaseResponse<StudyProgramApiDto[]>>(`/institutions/${institutionId}/programs`)
-    programs.value = (response.data.data ?? []).map(normalizeProgram)
+    const response = await api.get<StudyProgramApiDto[]>(`/institutions/${institutionId}/programs`)
+    programs.value = (response.data ?? []).map(normalizeProgram)
   } catch {
     errorMessage.value = t('errors.unexpected')
   }
@@ -197,10 +198,10 @@ async function loadProfiles(programId: string) {
   }
 
   try {
-    const response = await api.get<BaseResponse<StudyProfileApiDto[]>>(
+    const response = await api.get<StudyProfileApiDto[]>(
       `/institutions/${selectedInstitution.value.id}/programs/${programId}/profiles`
     )
-    profiles.value = (response.data.data ?? []).map(normalizeProfile)
+    profiles.value = (response.data ?? []).map(normalizeProfile)
   } catch {
     errorMessage.value = t('errors.unexpected')
   }
@@ -333,16 +334,12 @@ async function finishOnboarding() {
   try {
     isSubmitting.value = true
     errorMessage.value = null
-    const response = await api.post<BaseResponse>('/auth/onboarding', payload)
-    if (!response.data.success) {
-      errorMessage.value = response.data.error?.message ?? t('errors.unexpected')
-      return
-    }
-
+    await api.post('/auth/onboarding', payload)
     await authStore.init(true)
     await router.push('/home')
-  } catch {
-    errorMessage.value = t('errors.unexpected')
+  } catch (error) {
+    const problem = (error as AxiosError<ProblemDetails>).response?.data
+    errorMessage.value = problem?.detail ?? t('errors.unexpected')
   } finally {
     isSubmitting.value = false
   }

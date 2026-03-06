@@ -1,17 +1,10 @@
-export interface RequestInfo {
-  method: string
-  path: string
-  timestamp: string
-}
-
-export interface ErrorDetails {
-  code: string
-  message: string
-}
-
-export interface BaseResponse<T = null> {
-  success: boolean
-  data: T | null
-  error: ErrorDetails | null
-  request: RequestInfo | null
+export interface ProblemDetails {
+  type?: string
+  title: string
+  status: number
+  detail: string
+  extensions?: {
+    code?: string
+    errors?: Array<{ code: string; description: string }>
+  }
 }

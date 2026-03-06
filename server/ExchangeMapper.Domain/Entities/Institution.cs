@@ -9,5 +9,5 @@ public class Institution
     public string? ErasmusCode { get; set; }
     public bool IsHome { get; set; }
 
-    public ICollection<StudyProgram> StudyPrograms { get; set; } = new List<StudyProgram>();
+    public ICollection<StudyProgram> StudyPrograms { get; set; } = [];
 }

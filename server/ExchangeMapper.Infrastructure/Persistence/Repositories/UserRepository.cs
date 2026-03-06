@@ -1,4 +1,4 @@
-using ExchangeMapper.Application.Interfaces;
+using ExchangeMapper.Application.Interfaces.Repositories;
 using ExchangeMapper.Domain.Entities;
 using ExchangeMapper.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;

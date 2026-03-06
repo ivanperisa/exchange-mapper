@@ -2,7 +2,6 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { authService } from '@/services/auth.service'
 import { api } from '@/services/api'
-import type { BaseResponse } from '@/types/api.types'
 import type { AuthMeResponse } from '@/types/auth.types'
 import type { InstitutionDto, StudyProgramDto, StudyProfileDto } from '@/types/institution.types'
 
@@ -28,14 +27,15 @@ export const useAuthStore = defineStore('auth', () => {
     initialized.value = true
 
     try {
-      const response = await api.get<BaseResponse<AuthMeResponse>>('/auth/me')
-      if (response.data.success && response.data.data?.isAuthenticated) {
-        user.value = response.data.data
-        isOnboarded.value = response.data.data.isOnboarded
-        role.value = response.data.data.role
-        institution.value = response.data.data.institution
-        studyProgram.value = response.data.data.studyProgram
-        studyProfile.value = response.data.data.studyProfile
+      const response = await api.get<AuthMeResponse>('/auth/me')
+      const data = response.data
+      if (data.isAuthenticated) {
+        user.value = data
+        isOnboarded.value = data.isOnboarded
+        role.value = data.role ?? null
+        institution.value = data.institution
+        studyProgram.value = data.studyProgram
+        studyProfile.value = data.studyProfile
         return
       }
     } catch {

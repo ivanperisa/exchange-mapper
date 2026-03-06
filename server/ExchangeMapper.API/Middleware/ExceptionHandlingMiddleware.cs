@@ -1,5 +1,4 @@
-using System.Text.Json;
-using ExchangeMapper.Application.DTOs;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ExchangeMapper.API.Middleware;
 
@@ -27,18 +26,23 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
             _ => (StatusCodes.Status500InternalServerError, "INTERNAL_ERROR")
         };
 
-        var response = BaseResponse<object>.Fail(
-            code,
-            exception.Message,
-            new RequestInfo
-            {
-                Method = context.Request.Method,
-                Path = context.Request.Path,
-                Timestamp = DateTime.UtcNow.ToString("O")
-            });
+        var title = statusCode switch
+        {
+            StatusCodes.Status404NotFound => "Not Found",
+            StatusCodes.Status400BadRequest => "Bad Request",
+            _ => "Internal Server Error"
+        };
 
-        context.Response.ContentType = "application/json";
+        var problemDetails = new ProblemDetails
+        {
+            Status = statusCode,
+            Title = title,
+            Detail = exception.Message
+        };
+        problemDetails.Extensions["code"] = code;
+
         context.Response.StatusCode = statusCode;
-        await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+        context.Response.ContentType = "application/problem+json";
+        await context.Response.WriteAsJsonAsync(problemDetails);
     }
 }

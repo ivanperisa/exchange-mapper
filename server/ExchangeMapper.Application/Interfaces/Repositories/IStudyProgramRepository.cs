@@ -1,6 +1,6 @@
 using ExchangeMapper.Domain.Entities;
 
-namespace ExchangeMapper.Application.Interfaces;
+namespace ExchangeMapper.Application.Interfaces.Repositories;
 
 public interface IStudyProgramRepository
 {

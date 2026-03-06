@@ -1,4 +1,4 @@
-namespace ExchangeMapper.Application.DTOs;
+namespace ExchangeMapper.Application.DTOs.Responses;
 
 public class AuthMeResponseDto
 {
@@ -8,7 +8,7 @@ public class AuthMeResponseDto
     public string Name { get; set; } = string.Empty;
     public string Role { get; set; } = string.Empty;
     public bool IsOnboarded { get; set; }
-    public InstitutionDto? Institution { get; set; }
-    public StudyProgramDto? StudyProgram { get; set; }
-    public StudyProfileDto? StudyProfile { get; set; }
+    public InstitutionResponseDto? Institution { get; set; }
+    public StudyProgramResponseDto? StudyProgram { get; set; }
+    public StudyProfileResponseDto? StudyProfile { get; set; }
 }

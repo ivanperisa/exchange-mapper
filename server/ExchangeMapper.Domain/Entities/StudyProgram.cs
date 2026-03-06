@@ -8,5 +8,5 @@ public class StudyProgram
     public string IscedCode { get; set; } = string.Empty;
 
     public Institution Institution { get; set; } = null!;
-    public ICollection<StudyProfile> StudyProfiles { get; set; } = new List<StudyProfile>();
+    public ICollection<StudyProfile> StudyProfiles { get; set; } = [];
 }
