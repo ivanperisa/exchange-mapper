@@ -1,60 +1,30 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import AppHeader from '@/components/AppHeader.vue'
 import { useAuthStore } from '@/stores/auth.store'
-import '@/styles/home-view.css'
 
 const authStore = useAuthStore()
 const { t } = useI18n()
+const displayName = computed(() => authStore.name?.trim() || t('home.userFallback'))
 </script>
 
 <template>
-  <main class="home-page">
-    <section class="hero">
-      <p class="eyebrow">{{ t('common.appName') }}</p>
-      <h1>{{ t('home.title') }}</h1>
-      <p class="lead">{{ t('home.lead') }}</p>
-      <div class="hero-actions">
-        <button class="primary">{{ t('home.newScheme') }}</button>
-        <button class="ghost">{{ t('home.importFromTable') }}</button>
+  <main class="min-h-screen bg-[#071C2C]">
+    <AppHeader />
+
+    <section class="flex min-h-[calc(100vh-4rem)] items-center justify-center px-6">
+      <div class="text-center">
+        <h1 class="text-3xl font-bold text-[#CAE4F7] sm:text-4xl">{{ t('home.welcomeBack', { name: displayName }) }}</h1>
+        <p class="mt-3 text-sm text-[#8AC4ED] sm:text-base">{{ t('home.noActiveExchange') }}</p>
+
+        <RouterLink
+          to="/exchange"
+          class="mt-8 inline-flex rounded-xl bg-[#218CD9] px-6 py-3 font-semibold text-white transition hover:bg-[#8AC4ED] hover:text-[#071C2C]"
+        >
+          {{ t('home.startExchangeSetup') }}
+        </RouterLink>
       </div>
-    </section>
-
-    <section class="grid">
-      <article class="card">
-        <h2>{{ t('home.studentProfile.title') }}</h2>
-        <p>
-          <strong>{{ t('home.studentProfile.statusLabel') }}</strong>
-          {{ authStore.isLoggedIn ? t('home.studentProfile.statusLoggedIn') : t('home.studentProfile.statusLoggedOut') }}
-        </p>
-        <p>
-          <strong>{{ t('home.studentProfile.emailLabel') }}</strong>
-          {{ authStore.user?.profile?.email ?? t('common.na') }}
-        </p>
-        <p v-if="authStore.callbackError" class="error">
-          {{ t('home.studentProfile.authErrorLabel') }} {{ authStore.callbackError }}
-        </p>
-        <button class="danger" @click="authStore.logout()">{{ t('home.studentProfile.logout') }}</button>
-      </article>
-
-      <article class="card">
-        <h2>{{ t('home.exchangeCourses.title') }}</h2>
-        <ul>
-          <li>{{ t('home.exchangeCourses.item1') }}</li>
-          <li>{{ t('home.exchangeCourses.item2') }}</li>
-          <li>{{ t('home.exchangeCourses.item3') }}</li>
-          <li>{{ t('home.exchangeCourses.item4') }}</li>
-        </ul>
-      </article>
-
-      <article class="card">
-        <h2>{{ t('home.history.title') }}</h2>
-        <ul>
-          <li>{{ t('home.history.item1') }}</li>
-          <li>{{ t('home.history.item2') }}</li>
-          <li>{{ t('home.history.item3') }}</li>
-          <li>{{ t('home.history.item4') }}</li>
-        </ul>
-      </article>
     </section>
   </main>
 </template>

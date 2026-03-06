@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import 'flag-icons/css/flag-icons.min.css'
+import './assets/main.css'
 
 import App from './App.vue'
 import { i18n } from './i18n'

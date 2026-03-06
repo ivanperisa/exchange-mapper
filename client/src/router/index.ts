@@ -1,45 +1,44 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
-import { i18n } from '@/i18n'
+import LandingView from '@/views/LandingView.vue'
+import HomeView from '@/views/HomeView.vue'
 import CallbackView from '@/views/CallbackView.vue'
+import ExchangeView from '@/views/ExchangeView.vue'
+import HistoryView from '@/views/HistoryView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      component: () => import('@/views/HomeView.vue'),
+      component: LandingView
+    },
+    {
+      path: '/home',
+      component: HomeView,
       meta: { requiresAuth: true }
     },
     {
-      path: '/auth-error',
-      component: () => import('@/views/AuthErrorView.vue')
+      path: '/exchange',
+      component: ExchangeView,
+      meta: { requiresAuth: true }
     },
     {
-      path: '/logged-out',
-      component: () => import('@/views/LoggedOutView.vue')
+      path: '/history',
+      component: HistoryView,
+      meta: { requiresAuth: true }
     },
-    {
-      path: '/callback',
-      component: CallbackView
-    }
+    { path: '/callback', component: CallbackView }
   ]
 })
 
 router.beforeEach(async (to) => {
-  const authStore = useAuthStore()
-  if (to.path !== '/callback') {
+  if (to.meta.requiresAuth) {
+    const authStore = useAuthStore()
     await authStore.init()
-  }
-
-  if (to.meta.requiresAuth && !authStore.isLoggedIn) {
-    try {
-      await authStore.login(to.fullPath)
-    } catch (error) {
-      authStore.callbackError = error instanceof Error ? error.message : i18n.global.t('callback.failed')
-      return '/auth-error'
+    if (!authStore.isLoggedIn) {
+      return '/'
     }
-    return false
   }
 })
 

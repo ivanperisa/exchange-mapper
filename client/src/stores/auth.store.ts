@@ -1,32 +1,51 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import axios from 'axios'
 import { authService } from '@/services/auth.service'
-import type { User } from 'oidc-client-ts'
+
+type AuthMeResponse = {
+  isAuthenticated: boolean
+  email?: string | null
+  name?: string | null
+  sub?: string | null
+}
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref<User | null>(null)
-  const callbackError = ref<string | null>(null)
+  const isAuthenticated = ref(false)
+  const email = ref<string | null>(null)
+  const name = ref<string | null>(null)
+  const sub = ref<string | null>(null)
 
-  const isLoggedIn = computed(() => !!user.value && !user.value.expired)
-  const accessToken = computed(() => user.value?.access_token)
+  const isLoggedIn = computed(() => isAuthenticated.value)
 
   async function init() {
-    user.value = await authService.getUser()
+    try {
+      const response = await axios.get<AuthMeResponse>('http://localhost:5000/auth/me', { withCredentials: true })
+      const data = response.data
+      isAuthenticated.value = data.isAuthenticated === true
+      email.value = data.email ?? null
+      name.value = data.name ?? null
+      sub.value = data.sub ?? null
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        isAuthenticated.value = false
+        email.value = null
+        name.value = null
+        sub.value = null
+        return
+      }
+
+      throw error
+    }
   }
 
-  async function login(returnTo: string = '/') {
-    await authService.login(returnTo)
+  function login() {
+    authService.login()
   }
 
-  async function logout() {
-    await authService.logout()
-    user.value = null
+  function logout() {
+    authService.logout()
   }
 
-  async function handleCallback() {
-    callbackError.value = null
-    user.value = await authService.handleCallback()
-  }
-
-  return { user, callbackError, isLoggedIn, accessToken, init, login, logout, handleCallback }
+  return { isAuthenticated, email, name, sub, isLoggedIn, init, login, logout }
 })
