@@ -5,6 +5,7 @@ import HomeView from '@/views/HomeView.vue'
 import CallbackView from '@/views/CallbackView.vue'
 import ExchangeView from '@/views/ExchangeView.vue'
 import HistoryView from '@/views/HistoryView.vue'
+import OnboardingView from '@/views/OnboardingView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -28,17 +29,29 @@ const router = createRouter({
       component: HistoryView,
       meta: { requiresAuth: true }
     },
+    {
+      path: '/onboarding',
+      component: OnboardingView,
+      meta: { requiresAuth: true }
+    },
     { path: '/callback', component: CallbackView }
   ]
 })
 
 router.beforeEach(async (to) => {
-  if (to.meta.requiresAuth) {
-    const authStore = useAuthStore()
-    await authStore.init()
-    if (!authStore.isLoggedIn) {
-      return '/'
-    }
+  const authStore = useAuthStore()
+  await authStore.init()
+
+  if (to.meta.requiresAuth && !authStore.isLoggedIn) {
+    return '/'
+  }
+
+  if (authStore.isLoggedIn && !authStore.isOnboarded && to.path !== '/onboarding') {
+    return '/onboarding'
+  }
+
+  if (authStore.isLoggedIn && authStore.isOnboarded && to.path === '/onboarding') {
+    return '/home'
   }
 })
 

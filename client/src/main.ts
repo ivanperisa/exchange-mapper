@@ -4,7 +4,7 @@ import 'flag-icons/css/flag-icons.min.css'
 import './assets/main.css'
 
 import App from './App.vue'
-import { i18n } from './i18n'
+import { i18n } from './i18n/index'
 import router from './router'
 
 const app = createApp(App)

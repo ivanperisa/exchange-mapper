@@ -53,7 +53,7 @@ function redirectToLogin() {
                 fill="#EA4335"
               />
             </svg>
-            <span>{{ t('landing.signInWithGoogle') }}</span>
+            <span>{{ t('common.signIn') }}</span>
           </button>
         </article>
       </section>
@@ -93,7 +93,7 @@ function redirectToLogin() {
         <div class="floating floating-d"></div>
 
         <h2 class="relative z-10 max-w-3xl text-center text-3xl font-black uppercase tracking-[0.2em] text-[#CAE4F7] sm:text-5xl">
-          {{ t('landing.heroTitle') }}
+          {{ t('landing.visualTitle') }}
         </h2>
       </section>
     </div>

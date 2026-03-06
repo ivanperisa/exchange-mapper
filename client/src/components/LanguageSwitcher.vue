@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { AppLocale } from '@/i18n'
+import type { AppLocale } from '@/i18n/index'
 import '@/styles/language-switcher.css'
 
 const { t, locale } = useI18n()
