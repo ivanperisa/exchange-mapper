@@ -15,9 +15,13 @@ public class UserRepository(AppDbContext context) : IUserRepository
     public async Task<User?> GetByExternalIdWithDetailsAsync(string externalId)
     {
         return await context.Users
-            .Include(u => u.Institution)
-            .Include(u => u.StudyProfile)
-                .ThenInclude(sp => sp.StudyProgram)
+            .Include(u => u.UserInstitutions)
+                .ThenInclude(ui => ui.Institution)
+            .Include(u => u.UserInstitutions)
+                .ThenInclude(ui => ui.StudyProfile)
+                    .ThenInclude(sp => sp!.StudyProgram)
+            .Include(u => u.UserInstitutions)
+                .ThenInclude(ui => ui.Exchanges)
             .FirstOrDefaultAsync(u => u.ExternalId == externalId);
     }
 

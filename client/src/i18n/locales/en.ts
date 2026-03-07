@@ -9,10 +9,12 @@ export default {
     language: 'Language',
     user: 'User'
   },
+  auth: {
+    signInWithGoogle: 'Sign in with Google'
+  },
   landing: {
     tagline: 'Simplify your Erasmus course mapping',
-    description:
-      'Map your exchange courses, track ECTS credits, and get approval from your coordinator — all in one place.',
+    description: 'Map your exchange courses, track ECTS credits, and get approval from your coordinator - all in one place.',
     visualTitle: 'Course Mapping Made Simple'
   },
   home: {
@@ -27,8 +29,7 @@ export default {
     title: 'Account Setup',
     steps: {
       role: 'Role',
-      institution: 'Home Institution',
-      program: 'Program & Profile',
+      institutions: 'Institutions',
       confirm: 'Confirm'
     },
     role: {
@@ -37,26 +38,30 @@ export default {
       coordinator: 'Coordinator',
       coordinatorNote: 'Your role will be confirmed.'
     },
-    institution: {
-      title: 'Select your home institution',
+    institutions: {
+      title: 'Select your institutions',
+      subtitle: 'Add all universities where you study.',
+      addToList: 'Add to list',
+      added: 'Added institutions',
+      empty: 'You have not added any institutions.',
+      minOne: 'Add at least one institution to continue.',
+      duplicate: 'This institution and profile combination is already added.',
+      existingOption: 'Existing institution',
+      newOption: 'New institution',
       searchPlaceholder: 'Search institutions...',
-      addNew: '+ Add new institution',
+      selectProgram: 'Select program',
+      selectProfile: 'Select profile',
+      newProfileOption: '+ New profile',
+      newProfilePlaceholder: 'New profile name',
       form: {
         name: 'Institution name',
         country: 'Country',
         city: 'City',
         erasmusCode: 'Erasmus code',
         iscedCode: 'ISCED code',
-        programName: 'Study program name',
+        programName: 'Program name',
         profileName: 'Profile name'
       }
-    },
-    program: {
-      title: 'Select program and profile',
-      selectProgram: 'Select program',
-      selectProfile: 'Select profile',
-      addNewProfile: '+ Add new profile',
-      profileNamePlaceholder: 'New profile name'
     },
     confirm: {
       title: 'Review your details',
@@ -83,8 +88,35 @@ export default {
   },
   nav: {
     home: 'Home',
+    settings: 'Settings',
     exchange: 'Exchange',
     history: 'History'
+  },
+  settings: {
+    title: 'Settings',
+    profile: {
+      title: 'Profile',
+      name: 'Name',
+      email: 'Email address',
+      role: 'Role'
+    },
+    institutions: {
+      title: 'My institutions',
+      empty: 'You have no institutions added.',
+      program: 'Program',
+      profile: 'Profile',
+      edit: 'Edit',
+      editDisabledTooltip: 'Cannot edit institution with active exchanges.',
+      save: 'Save',
+      cancel: 'Cancel',
+      remove: 'Remove',
+      addButton: 'Add institution',
+      addTitle: 'Add institution',
+      removeConfirm: 'Are you sure you want to remove this institution?',
+      removeError: 'Cannot remove institution with active exchanges.',
+      updateSuccess: 'Institution updated successfully.',
+      addSuccess: 'Institution added successfully.'
+    }
   },
   exchange: {
     title: 'Exchange Setup',

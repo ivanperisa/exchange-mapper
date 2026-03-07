@@ -12,13 +12,25 @@ public class StudyProfileConfiguration : IEntityTypeConfiguration<StudyProfile>
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
         builder.Property(x => x.StudyProgramId).HasColumnName("study_program_id").IsRequired();
         builder.Property(x => x.Name).HasColumnName("name").IsRequired();
+        builder.Property(x => x.NameEn).HasColumnName("name_en").IsRequired();
+        builder.Property(x => x.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()").IsRequired();
 
         builder.HasOne(x => x.StudyProgram)
             .WithMany(x => x.StudyProfiles)
             .HasForeignKey(x => x.StudyProgramId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(x => x.UserInstitutions)
+            .WithOne(x => x.StudyProfile)
+            .HasForeignKey(x => x.StudyProfileId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasMany(x => x.Courses)
+            .WithOne(x => x.StudyProfile)
+            .HasForeignKey(x => x.StudyProfileId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

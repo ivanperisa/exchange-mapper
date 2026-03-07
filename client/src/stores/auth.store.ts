@@ -1,18 +1,17 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { authService } from '@/services/auth.service'
+import { userService } from '@/services/user.service'
 import { api } from '@/services/api'
 import type { AuthMeResponse } from '@/types/auth.types'
-import type { InstitutionDto, StudyProgramDto, StudyProfileDto } from '@/types/institution.types'
+import type { InstitutionEntryDto, UserInstitutionDto } from '@/types/user.types'
 
 export const useAuthStore = defineStore('auth', () => {
   const initialized = ref(false)
   const user = ref<AuthMeResponse | null>(null)
   const isOnboarded = ref<boolean>(false)
   const role = ref<string | null>(null)
-  const institution = ref<InstitutionDto | null>(null)
-  const studyProgram = ref<StudyProgramDto | null>(null)
-  const studyProfile = ref<StudyProfileDto | null>(null)
+  const institutions = ref<UserInstitutionDto[]>([])
 
   const isLoggedIn = computed(() => user.value?.isAuthenticated === true)
   const email = computed(() => user.value?.email ?? null)
@@ -33,9 +32,7 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = data
         isOnboarded.value = data.isOnboarded
         role.value = data.role ?? null
-        institution.value = data.institution
-        studyProgram.value = data.studyProgram
-        studyProfile.value = data.studyProfile
+        institutions.value = data.institutions ?? []
         return
       }
     } catch {
@@ -45,9 +42,7 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     isOnboarded.value = false
     role.value = null
-    institution.value = null
-    studyProgram.value = null
-    studyProfile.value = null
+    institutions.value = []
   }
 
   function login() {
@@ -59,25 +54,42 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     isOnboarded.value = false
     role.value = null
-    institution.value = null
-    studyProgram.value = null
-    studyProfile.value = null
+    institutions.value = []
     authService.logout()
+  }
+
+  async function addInstitution(request: InstitutionEntryDto): Promise<void> {
+    await userService.addInstitution(request)
+    await init(true)
+  }
+
+  async function updateInstitution(userInstitutionId: string, request: InstitutionEntryDto): Promise<void> {
+    await userService.updateInstitution(userInstitutionId, request)
+    await init(true)
+  }
+
+  async function removeInstitution(userInstitutionId: string): Promise<void> {
+    await userService.removeInstitution(userInstitutionId)
+    institutions.value = institutions.value.filter((i) => i.userInstitutionId !== userInstitutionId)
+    if (user.value) {
+      user.value = { ...user.value, institutions: institutions.value }
+    }
   }
 
   return {
     user,
     isOnboarded,
     role,
-    institution,
-    studyProgram,
-    studyProfile,
+    institutions,
     email,
     name,
     sub,
     isLoggedIn,
     init,
     login,
-    logout
+    logout,
+    addInstitution,
+    updateInstitution,
+    removeInstitution
   }
 })

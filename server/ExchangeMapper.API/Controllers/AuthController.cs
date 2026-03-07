@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using ExchangeMapper.API.Extensions;
-using ExchangeMapper.Application.DTOs.Requests;
 using ExchangeMapper.Application.Interfaces.Services;
 using ExchangeMapper.Application.Mappers;
 using Microsoft.AspNetCore.Authentication;
@@ -85,35 +84,5 @@ public class AuthController(
         };
 
         return SignOut(authProperties, CookieAuthenticationDefaults.AuthenticationScheme);
-    }
-
-    [Authorize]
-    [HttpPost("onboarding")]
-    public async Task<IActionResult> Onboarding([FromBody] CompleteOnboardingRequestDto request)
-    {
-        var userId = GetCurrentUserId();
-        if (userId is null)
-        {
-            return Unauthorized();
-        }
-
-        var result = await userService.CompleteOnboardingAsync(userId.Value, request);
-        return Match(result, _ => Ok());
-    }
-
-    [Authorize]
-    [HttpPost("make-coordinator")]
-    public async Task<IActionResult> MakeCoordinator([FromBody] MakeCoordinatorRoleRequestDto request)
-    {
-        var result = await userService.MakeCoordinatorAsync(request.UserId);
-        return Match(result, _ => Ok());
-    }
-
-    [Authorize]
-    [HttpGet("token")]
-    public async Task<IActionResult> Token()
-    {
-        var accessToken = await HttpContext.GetTokenAsync("access_token");
-        return Ok(new { accessToken });
     }
 }

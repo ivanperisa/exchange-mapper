@@ -16,8 +16,15 @@ const router = createRouter({
     },
     {
       path: '/home',
+      name: 'home',
       component: HomeView,
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/settings',
+      name: 'settings',
+      component: () => import('@/views/SettingsView.vue'),
+      meta: { requiresAuth: true, requiresOnboarding: true }
     },
     {
       path: '/exchange',
@@ -47,6 +54,10 @@ router.beforeEach(async (to) => {
   }
 
   if (authStore.isLoggedIn && !authStore.isOnboarded && to.path !== '/onboarding') {
+    return '/onboarding'
+  }
+
+  if (to.meta.requiresOnboarding && !authStore.isOnboarded) {
     return '/onboarding'
   }
 

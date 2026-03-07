@@ -9,6 +9,7 @@ const { t } = useI18n()
 
 const displayName = computed(() => authStore.name?.trim() || t('common.user'))
 const isCoordinator = computed(() => authStore.role === 'Coordinator')
+const firstInstitution = computed(() => authStore.institutions[0] ?? null)
 const roleLabel = computed(() =>
   authStore.role === 'Coordinator' ? t('onboarding.role.coordinator') : t('onboarding.role.student')
 )
@@ -17,6 +18,17 @@ const roleBadgeClass = computed(() =>
     ? 'bg-[#218CD9]/20 text-[#8AC4ED] border-[#218CD9]'
     : 'bg-green-500/15 text-green-300 border-green-400'
 )
+
+function initialsFrom(name?: string | null) {
+  const source = (name ?? '').trim()
+  if (!source) return 'I'
+  return source
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? '')
+    .join('')
+}
 </script>
 
 <template>
@@ -39,8 +51,17 @@ const roleBadgeClass = computed(() =>
               </svg>
             </div>
             <p class="text-xs uppercase tracking-wide text-[#8AC4ED]">{{ t('home.institution') }}</p>
-            <p class="mt-1 text-lg font-semibold text-[#CAE4F7]">{{ authStore.institution?.name ?? t('common.na') }}</p>
-            <p class="mt-1 text-sm text-slate-300">{{ authStore.institution?.country ?? t('common.na') }}</p>
+            <div class="mt-2">
+              <ul class="space-y-1">
+                <li v-for="it in authStore.institutions" :key="it.userInstitutionId" class="flex items-center gap-3">
+                  <div class="avatar-mini">{{ initialsFrom(it.institution.name) }}</div>
+                  <div>
+                    <div class="text-sm font-semibold text-[#CAE4F7]">{{ it.institution.name }}</div>
+                    <div class="text-xs text-slate-300">{{ it.institution.country }}</div>
+                  </div>
+                </li>
+              </ul>
+            </div>
           </article>
 
           <article v-if="!isCoordinator" class="rounded-xl border border-[#218CD9] bg-[#0A2235] p-5">
@@ -50,7 +71,9 @@ const roleBadgeClass = computed(() =>
               </svg>
             </div>
             <p class="text-xs uppercase tracking-wide text-[#8AC4ED]">{{ t('home.studyProgram') }}</p>
-            <p class="mt-1 text-lg font-semibold text-[#CAE4F7]">{{ authStore.studyProgram?.name ?? t('common.na') }}</p>
+            <p class="mt-1 text-lg font-semibold text-[#CAE4F7]">
+              {{ firstInstitution?.studyProgram?.name ?? t('common.na') }}
+            </p>
           </article>
 
           <article v-if="!isCoordinator" class="rounded-xl border border-[#218CD9] bg-[#0A2235] p-5">
@@ -62,10 +85,11 @@ const roleBadgeClass = computed(() =>
               </svg>
             </div>
             <p class="text-xs uppercase tracking-wide text-[#8AC4ED]">{{ t('home.studyProfile') }}</p>
-            <p class="mt-1 text-lg font-semibold text-[#CAE4F7]">{{ authStore.studyProfile?.name ?? t('common.na') }}</p>
+            <p class="mt-1 text-lg font-semibold text-[#CAE4F7]">
+              {{ firstInstitution?.studyProfile?.name ?? t('common.na') }}
+            </p>
           </article>
         </div>
-
         <div class="mt-6 flex items-center justify-center">
           <span class="rounded-full border px-4 py-1 text-sm font-semibold" :class="roleBadgeClass">
             {{ roleLabel }}
@@ -84,3 +108,18 @@ const roleBadgeClass = computed(() =>
     </section>
   </main>
 </template>
+
+<style scoped>
+.avatar-mini {
+  height: 32px;
+  width: 32px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #ffffff;
+  background: linear-gradient(45deg, #218CD9, #8AC4ED);
+}
+</style>

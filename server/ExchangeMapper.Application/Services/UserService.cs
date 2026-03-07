@@ -9,6 +9,8 @@ namespace ExchangeMapper.Application.Services;
 
 public class UserService(
     IUserRepository userRepository,
+    IUserInstitutionRepository userInstitutionRepository,
+    IExchangeRepository exchangeRepository,
     IInstitutionRepository institutionRepository,
     IStudyProgramRepository studyProgramRepository,
     IStudyProfileRepository studyProfileRepository) : IUserService
@@ -72,26 +74,41 @@ public class UserService(
             : user;
     }
 
-    public async Task<ErrorOr<Success>> CompleteOnboardingAsync(Guid userId, CompleteOnboardingRequestDto request)
+    public async Task<ErrorOr<Success>> CompleteOnboardingAsync(Guid userId, OnboardingRequestDto request)
     {
-        if (!Enum.IsDefined(request.Role))
+        if (!Enum.IsDefined(typeof(UserRole), request.Role))
         {
             return Error.Validation("INVALID_ROLE", "Provided role is not valid.");
         }
 
-        if (request.Role == UserRole.Student
-            && request.ExistingStudyProfileId is null
-            && request.NewStudyProfile is null
-            && request.NewInstitution is null)
+        if (request.Institutions is null || request.Institutions.Count == 0)
         {
-            return Error.Validation("MISSING_STUDY_PROFILE", "Students must provide study profile information.");
+            return Error.Validation("MISSING_INSTITUTIONS", "At least one institution is required.");
         }
 
-        if (request.Role == UserRole.Coordinator
-            && request.ExistingInstitutionId is null
-            && request.NewInstitution is null)
+        if (request.Role == UserRole.Student)
         {
-            return Error.Validation("MISSING_INSTITUTION", "Coordinators must provide an institution.");
+            var missingProfile = request.Institutions.Any(i =>
+                i.ExistingStudyProfileId is null &&
+                i.NewStudyProfile is null &&
+                i.NewInstitution is null);
+
+            if (missingProfile)
+            {
+                return Error.Validation("MISSING_STUDY_PROFILE", "Each student institution entry must include a study profile.");
+            }
+        }
+
+        if (request.Role == UserRole.Coordinator)
+        {
+            var missingInstitution = request.Institutions.Any(i =>
+                i.ExistingInstitutionId is null &&
+                i.NewInstitution is null);
+
+            if (missingInstitution)
+            {
+                return Error.Validation("MISSING_INSTITUTION", "Each coordinator entry must include an institution.");
+            }
         }
 
         var user = await userRepository.GetByIdAsync(userId);
@@ -100,124 +117,170 @@ public class UserService(
             return Error.NotFound("USER_NOT_FOUND", "User not found.");
         }
 
-        Guid? institutionId;
-        Guid? studyProfileId;
-
-        if (request.NewInstitution is not null)
+        var userInstitutions = new List<UserInstitution>();
+        foreach (var entry in request.Institutions)
         {
-            if (string.IsNullOrWhiteSpace(request.NewInstitution.Name)
-                || string.IsNullOrWhiteSpace(request.NewInstitution.Country)
-                || string.IsNullOrWhiteSpace(request.NewInstitution.IscedCode)
-                || string.IsNullOrWhiteSpace(request.NewInstitution.ProgramName)
-                || string.IsNullOrWhiteSpace(request.NewInstitution.ProfileName))
+            var assignment = await ResolveInstitutionAssignmentAsync(entry, request.Role);
+            if (assignment.IsError)
             {
-                return Error.Validation(
-                    "INVALID_NEW_INSTITUTION",
-                    "New institution requires name, country, ISCED code, program name, and profile name.");
+                return assignment.Errors;
             }
 
-            var institution = new Institution
+            var duplicate = userInstitutions.Any(ui =>
+                ui.InstitutionId == assignment.Value.InstitutionId && ui.StudyProfileId == assignment.Value.StudyProfileId);
+            if (duplicate)
+            {
+                return Error.Conflict("DUPLICATE_INSTITUTION", "Duplicate institution entry in request.");
+            }
+
+            userInstitutions.Add(new UserInstitution
             {
                 Id = Guid.NewGuid(),
-                Name = request.NewInstitution.Name,
-                Country = request.NewInstitution.Country,
-                City = request.NewInstitution.City,
-                ErasmusCode = request.NewInstitution.ErasmusCode,
-                IsHome = true
-            };
-            await institutionRepository.AddAsync(institution);
-
-            var studyProgram = new StudyProgram
-            {
-                Id = Guid.NewGuid(),
-                InstitutionId = institution.Id,
-                Name = request.NewInstitution.ProgramName,
-                IscedCode = request.NewInstitution.IscedCode
-            };
-            await studyProgramRepository.AddAsync(studyProgram);
-
-            var studyProfile = new StudyProfile
-            {
-                Id = Guid.NewGuid(),
-                StudyProgramId = studyProgram.Id,
-                Name = request.NewInstitution.ProfileName
-            };
-            await studyProfileRepository.AddAsync(studyProfile);
-
-            institutionId = institution.Id;
-            studyProfileId = studyProfile.Id;
+                UserId = userId,
+                InstitutionId = assignment.Value.InstitutionId,
+                StudyProfileId = assignment.Value.StudyProfileId,
+                CreatedAt = DateTime.UtcNow
+            });
         }
-        else if (request.ExistingInstitutionId.HasValue && request.NewStudyProfile is not null && request.Role == UserRole.Student)
+
+        foreach (var ui in userInstitutions)
         {
-            if (request.NewStudyProfile.StudyProgramId == Guid.Empty || string.IsNullOrWhiteSpace(request.NewStudyProfile.ProfileName))
-            {
-                return Error.Validation("INVALID_NEW_STUDY_PROFILE", "Study program id and profile name are required.");
-            }
-
-            var institution = await institutionRepository.GetByIdAsync(request.ExistingInstitutionId.Value);
-            if (institution is null)
-            {
-                return Error.NotFound("INSTITUTION_NOT_FOUND", "Institution not found.");
-            }
-
-            var studyProgram = await studyProgramRepository.GetByIdAsync(request.NewStudyProfile.StudyProgramId);
-            if (studyProgram is null || studyProgram.InstitutionId != institution.Id)
-            {
-                return Error.Validation("INVALID_STUDY_PROGRAM", "Study program does not belong to the selected institution.");
-            }
-
-            var studyProfile = new StudyProfile
-            {
-                Id = Guid.NewGuid(),
-                StudyProgramId = request.NewStudyProfile.StudyProgramId,
-                Name = request.NewStudyProfile.ProfileName
-            };
-            await studyProfileRepository.AddAsync(studyProfile);
-
-            institutionId = institution.Id;
-            studyProfileId = studyProfile.Id;
-        }
-        else if (request.ExistingStudyProfileId.HasValue)
-        {
-            var profile = await studyProfileRepository.GetByIdAsync(request.ExistingStudyProfileId.Value);
-            if (profile is null)
-            {
-                return Error.NotFound("STUDY_PROFILE_NOT_FOUND", "Study profile not found.");
-            }
-
-            var program = await studyProgramRepository.GetByIdAsync(profile.StudyProgramId);
-            if (program is null)
-            {
-                return Error.NotFound("STUDY_PROGRAM_NOT_FOUND", "Study program not found.");
-            }
-
-            studyProfileId = profile.Id;
-            institutionId = program.InstitutionId;
-        }
-        else if (request.Role == UserRole.Coordinator && request.ExistingInstitutionId.HasValue)
-        {
-            var institution = await institutionRepository.GetByIdAsync(request.ExistingInstitutionId.Value);
-            if (institution is null)
-            {
-                return Error.NotFound("INSTITUTION_NOT_FOUND", "Institution not found.");
-            }
-
-            institutionId = institution.Id;
-            studyProfileId = null;
-        }
-        else
-        {
-            return Error.Validation(
-                "INVALID_ONBOARDING_DATA",
-                "Onboarding request does not contain valid institution/study profile data.");
+            await userInstitutionRepository.AddAsync(ui);
         }
 
         user.Role = request.Role;
-        user.InstitutionId = institutionId;
-        user.StudyProfileId = studyProfileId;
         user.IsOnboarded = true;
-
         await userRepository.UpdateAsync(user);
+
+        return Result.Success;
+    }
+
+    public async Task<ErrorOr<Success>> AddInstitutionAsync(Guid userId, InstitutionEntryDto request, UserRole role)
+    {
+        if (!Enum.IsDefined(typeof(UserRole), role))
+        {
+            return Error.Validation("INVALID_ROLE", "Provided role is not valid.");
+        }
+
+        var user = await userRepository.GetByIdAsync(userId);
+        if (user is null)
+        {
+            return Error.NotFound("USER_NOT_FOUND", "User not found.");
+        }
+
+        if (user.Role != role)
+        {
+            return Error.Validation("INVALID_ROLE", "Request role does not match current user role.");
+        }
+
+        var assignment = await ResolveInstitutionAssignmentAsync(request, role);
+        if (assignment.IsError)
+        {
+            return assignment.Errors;
+        }
+
+        var existingUserInstitutions = await userInstitutionRepository.GetByUserIdAsync(userId);
+        var duplicateExists = existingUserInstitutions.Any(ui =>
+            ui.InstitutionId == assignment.Value.InstitutionId && ui.StudyProfileId == assignment.Value.StudyProfileId);
+        if (duplicateExists)
+        {
+            return Error.Conflict("USER_INSTITUTION_EXISTS", "User institution pair already exists.");
+        }
+
+        var userInstitution = new UserInstitution
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            InstitutionId = assignment.Value.InstitutionId,
+            StudyProfileId = assignment.Value.StudyProfileId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await userInstitutionRepository.AddAsync(userInstitution);
+        return Result.Success;
+    }
+
+    public async Task<ErrorOr<Success>> UpdateInstitutionAsync(
+        Guid userId,
+        Guid userInstitutionId,
+        InstitutionEntryDto request,
+        UserRole role)
+    {
+        if (userInstitutionId == Guid.Empty)
+        {
+            return Error.Validation("INVALID_USER_INSTITUTION_ID", "User institution id is required.");
+        }
+
+        if (!Enum.IsDefined(typeof(UserRole), role))
+        {
+            return Error.Validation("INVALID_ROLE", "Provided role is not valid.");
+        }
+
+        var existing = await userInstitutionRepository.GetByIdAsync(userInstitutionId);
+        if (existing is null)
+        {
+            return Error.NotFound("USER_INSTITUTION_NOT_FOUND", "Institution association not found.");
+        }
+
+        if (existing.UserId != userId)
+        {
+            return Error.Forbidden("FORBIDDEN", "You do not have permission to edit this institution.");
+        }
+
+        var hasActiveExchanges = await exchangeRepository.ExistsForUserInstitutionAsync(userInstitutionId);
+        if (hasActiveExchanges)
+        {
+            return Error.Conflict("HAS_ACTIVE_EXCHANGES", "Cannot edit institution with active exchanges.");
+        }
+
+        var assignment = await ResolveInstitutionAssignmentAsync(request, role);
+        if (assignment.IsError)
+        {
+            return assignment.Errors;
+        }
+
+        var existingUserInstitutions = await userInstitutionRepository.GetByUserIdAsync(userId);
+        var duplicateExists = existingUserInstitutions.Any(ui =>
+            ui.Id != userInstitutionId
+            && ui.InstitutionId == assignment.Value.InstitutionId
+            && ui.StudyProfileId == assignment.Value.StudyProfileId);
+        if (duplicateExists)
+        {
+            return Error.Conflict("USER_INSTITUTION_EXISTS", "User institution pair already exists.");
+        }
+
+        existing.InstitutionId = assignment.Value.InstitutionId;
+        existing.StudyProfileId = assignment.Value.StudyProfileId;
+
+        await userInstitutionRepository.UpdateAsync(existing);
+        return Result.Success;
+    }
+
+    public async Task<ErrorOr<Success>> RemoveInstitutionAsync(Guid userId, Guid userInstitutionId)
+    {
+        if (userInstitutionId == Guid.Empty)
+        {
+            return Error.Validation("INVALID_USER_INSTITUTION_ID", "User institution id is required.");
+        }
+
+        var userInstitution = await userInstitutionRepository.GetByIdAsync(userInstitutionId);
+        if (userInstitution is null)
+        {
+            return Error.NotFound("USER_INSTITUTION_NOT_FOUND", "Institution association not found.");
+        }
+
+        if (userInstitution.UserId != userId)
+        {
+            return Error.Forbidden("FORBIDDEN", "You do not have permission to remove this institution.");
+        }
+
+        var hasActiveExchanges = await exchangeRepository.ExistsForUserInstitutionAsync(userInstitutionId);
+        if (hasActiveExchanges)
+        {
+            return Error.Conflict("HAS_ACTIVE_EXCHANGES", "Cannot remove institution with active exchanges.");
+        }
+
+        await userInstitutionRepository.DeleteAsync(userInstitution);
         return Result.Success;
     }
 
@@ -233,5 +296,135 @@ public class UserService(
         user.IsOnboarded = true;
         await userRepository.UpdateAsync(user);
         return Result.Success;
+    }
+
+    private async Task<ErrorOr<(Guid InstitutionId, Guid? StudyProfileId)>> ResolveInstitutionAssignmentAsync(
+        InstitutionEntryDto entry,
+        UserRole role)
+    {
+        if (entry.NewInstitution is not null)
+        {
+            if (string.IsNullOrWhiteSpace(entry.NewInstitution.Name)
+                || string.IsNullOrWhiteSpace(entry.NewInstitution.Country))
+            {
+                return Error.Validation(
+                    "INVALID_NEW_INSTITUTION",
+                    "New institution requires at least name and country.");
+            }
+
+            var institution = new Institution
+            {
+                Id = Guid.NewGuid(),
+                Name = entry.NewInstitution.Name,
+                NameEn = entry.NewInstitution.NameEn?.Trim() ?? entry.NewInstitution.Name,
+                Country = entry.NewInstitution.Country,
+                City = entry.NewInstitution.City,
+                ErasmusCode = entry.NewInstitution.ErasmusCode,
+                IsHome = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            await institutionRepository.AddAsync(institution);
+
+            if (role == UserRole.Coordinator)
+            {
+                return (institution.Id, null);
+            }
+
+            if (string.IsNullOrWhiteSpace(entry.NewInstitution.IscedCode)
+                || string.IsNullOrWhiteSpace(entry.NewInstitution.ProgramName)
+                || string.IsNullOrWhiteSpace(entry.NewInstitution.ProfileName))
+            {
+                return Error.Validation(
+                    "INVALID_NEW_INSTITUTION",
+                    "Student onboarding requires ISCED code, program name, and profile name.");
+            }
+
+            var studyProgram = new StudyProgram
+            {
+                Id = Guid.NewGuid(),
+                InstitutionId = institution.Id,
+                Name = entry.NewInstitution.ProgramName,
+                NameEn = entry.NewInstitution.ProgramNameEn?.Trim() ?? entry.NewInstitution.ProgramName,
+                IscedCode = entry.NewInstitution.IscedCode,
+                CreatedAt = DateTime.UtcNow
+            };
+            await studyProgramRepository.AddAsync(studyProgram);
+
+            var studyProfile = new StudyProfile
+            {
+                Id = Guid.NewGuid(),
+                StudyProgramId = studyProgram.Id,
+                Name = entry.NewInstitution.ProfileName,
+                NameEn = entry.NewInstitution.ProfileNameEn?.Trim() ?? entry.NewInstitution.ProfileName,
+                CreatedAt = DateTime.UtcNow
+            };
+            await studyProfileRepository.AddAsync(studyProfile);
+
+            return (institution.Id, studyProfile.Id);
+        }
+
+        if (entry.ExistingInstitutionId.HasValue && entry.NewStudyProfile is not null && role == UserRole.Student)
+        {
+            if (entry.NewStudyProfile.StudyProgramId == Guid.Empty || string.IsNullOrWhiteSpace(entry.NewStudyProfile.ProfileName))
+            {
+                return Error.Validation("INVALID_NEW_STUDY_PROFILE", "Study program id and profile name are required.");
+            }
+
+            var institution = await institutionRepository.GetByIdAsync(entry.ExistingInstitutionId.Value);
+            if (institution is null)
+            {
+                return Error.NotFound("INSTITUTION_NOT_FOUND", "Institution not found.");
+            }
+
+            var studyProgram = await studyProgramRepository.GetByIdAsync(entry.NewStudyProfile.StudyProgramId);
+            if (studyProgram is null || studyProgram.InstitutionId != institution.Id)
+            {
+                return Error.Validation("INVALID_STUDY_PROGRAM", "Study program does not belong to the selected institution.");
+            }
+
+            var studyProfile = new StudyProfile
+            {
+                Id = Guid.NewGuid(),
+                StudyProgramId = entry.NewStudyProfile.StudyProgramId,
+                Name = entry.NewStudyProfile.ProfileName,
+                NameEn = entry.NewStudyProfile.ProfileNameEn?.Trim() ?? entry.NewStudyProfile.ProfileName,
+                CreatedAt = DateTime.UtcNow
+            };
+            await studyProfileRepository.AddAsync(studyProfile);
+
+            return (institution.Id, studyProfile.Id);
+        }
+
+        if (entry.ExistingStudyProfileId.HasValue)
+        {
+            var profile = await studyProfileRepository.GetByIdAsync(entry.ExistingStudyProfileId.Value);
+            if (profile is null)
+            {
+                return Error.NotFound("STUDY_PROFILE_NOT_FOUND", "Study profile not found.");
+            }
+
+            var program = await studyProgramRepository.GetByIdAsync(profile.StudyProgramId);
+            if (program is null)
+            {
+                return Error.NotFound("STUDY_PROGRAM_NOT_FOUND", "Study program not found.");
+            }
+
+            return (program.InstitutionId, profile.Id);
+        }
+
+        if (role == UserRole.Coordinator && entry.ExistingInstitutionId.HasValue)
+        {
+            var institution = await institutionRepository.GetByIdAsync(entry.ExistingInstitutionId.Value);
+            if (institution is null)
+            {
+                return Error.NotFound("INSTITUTION_NOT_FOUND", "Institution not found.");
+            }
+
+            return (institution.Id, null);
+        }
+
+        return Error.Validation(
+            "INVALID_INSTITUTION_ENTRY",
+            "Institution entry is not valid.");
     }
 }

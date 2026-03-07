@@ -21,10 +21,15 @@ public class UserSyncMiddleware(RequestDelegate next)
                 var syncResult = await userService.SyncUserAsync(sub, email, name ?? email);
                 if (!syncResult.IsError && context.User.Identity is ClaimsIdentity identity)
                 {
-                    var userId = syncResult.Value.Id.ToString();
+                    var user = syncResult.Value;
                     if (!identity.HasClaim(claim => claim.Type == "userId"))
                     {
-                        identity.AddClaim(new Claim("userId", userId));
+                        identity.AddClaim(new Claim("userId", user.Id.ToString()));
+                    }
+
+                    if (!identity.HasClaim(claim => claim.Type == ClaimTypes.Role))
+                    {
+                        identity.AddClaim(new Claim(ClaimTypes.Role, user.Role.ToString()));
                     }
                 }
             }

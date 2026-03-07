@@ -9,17 +9,19 @@ export default {
     language: 'Jezik',
     user: 'Korisnik'
   },
+  auth: {
+    signInWithGoogle: 'Prijava putem Googlea'
+  },
   landing: {
     tagline: 'Pojednostavite preslikavanje kolegija za Erasmus',
-    description:
-      'Preslikajte kolegije s razmjene, pratite ECTS bodove i dobijte odobrenje koordinatora — sve na jednom mjestu.',
+    description: 'Preslikajte kolegije s razmjene, pratite ECTS bodove i dobijte odobrenje koordinatora - sve na jednom mjestu.',
     visualTitle: 'Preslikavanje kolegija jednostavno'
   },
   home: {
     welcome: 'Dobrodošli, {name}',
     noExchange: 'Nemate aktivnu razmjenu. Krenite ispod.',
     startExchange: 'Postavi razmjenu',
-    institution: 'Matični fakultet',
+    institution: 'Maticni fakultet',
     studyProgram: 'Studijski program',
     studyProfile: 'Studijski profil'
   },
@@ -27,8 +29,7 @@ export default {
     title: 'Postavljanje računa',
     steps: {
       role: 'Uloga',
-      institution: 'Matični fakultet',
-      program: 'Program i profil',
+      institutions: 'Institucije',
       confirm: 'Potvrda'
     },
     role: {
@@ -37,32 +38,36 @@ export default {
       coordinator: 'Koordinator',
       coordinatorNote: 'Vaša uloga bit će potvrđena.'
     },
-    institution: {
-      title: 'Odaberite matični fakultet',
-      searchPlaceholder: 'Pretraži fakultete...',
-      addNew: '+ Dodaj novi fakultet',
+    institutions: {
+      title: 'Odaberite vaše institucije',
+      subtitle: 'Dodajte sve fakultete na kojima studirate.',
+      addToList: 'Dodaj u listu',
+      added: 'Dodane institucije',
+      empty: 'Niste dodali nijednu instituciju.',
+      minOne: 'Dodajte barem jednu instituciju za nastavak.',
+      duplicate: 'Ova kombinacija institucije i profila već je dodana.',
+      existingOption: 'Postojeća institucija',
+      newOption: 'Nova institucija',
+      searchPlaceholder: 'Pretraži institucije...',
+      selectProgram: 'Odaberi program',
+      selectProfile: 'Odaberi profil',
+      newProfileOption: '+ Novi profil',
+      newProfilePlaceholder: 'Naziv novog profila',
       form: {
-        name: 'Naziv fakulteta',
+        name: 'Naziv institucije',
         country: 'Država',
         city: 'Grad',
         erasmusCode: 'Erasmus kod',
         iscedCode: 'ISCED kod',
-        programName: 'Naziv studijskog programa',
+        programName: 'Naziv programa',
         profileName: 'Naziv profila'
       }
-    },
-    program: {
-      title: 'Odaberite program i profil',
-      selectProgram: 'Odaberi program',
-      selectProfile: 'Odaberi profil',
-      addNewProfile: '+ Dodaj novi profil',
-      profileNamePlaceholder: 'Naziv novog profila'
     },
     confirm: {
       title: 'Pregled podataka',
       submit: 'Završi postavljanje',
       role: 'Uloga',
-      institution: 'Fakultet',
+      institution: 'Institucija',
       program: 'Program',
       profile: 'Profil'
     },
@@ -71,7 +76,7 @@ export default {
     noResults: 'Nije pronađeno.',
     errors: {
       selectRole: 'Odaberite ulogu prije nastavka.',
-      institutionRequired: 'Odaberite fakultet ili unesite podatke za novi fakultet.',
+      institutionRequired: 'Odaberite instituciju ili unesite podatke za novu.',
       programProfileRequired: 'Odaberite studijski program i profil ili unesite novi profil.'
     }
   },
@@ -83,8 +88,35 @@ export default {
   },
   nav: {
     home: 'Početna',
+    settings: 'Postavke',
     exchange: 'Razmjena',
     history: 'Povijest'
+  },
+  settings: {
+    title: 'Postavke',
+    profile: {
+      title: 'Profil',
+      name: 'Ime',
+      email: 'E-mail adresa',
+      role: 'Uloga'
+    },
+    institutions: {
+      title: 'Moje institucije',
+      empty: 'Nemate dodanih institucija.',
+      program: 'Program',
+      profile: 'Profil',
+      edit: 'Uredi',
+      editDisabledTooltip: 'Nije moguce urediti instituciju s aktivnim razmjenama.',
+      save: 'Spremi',
+      cancel: 'Odustani',
+      remove: 'Ukloni',
+      addButton: 'Dodaj instituciju',
+      addTitle: 'Dodaj instituciju',
+      removeConfirm: 'Jeste li sigurni da želite ukloniti ovu instituciju?',
+      removeError: 'Nije moguće ukloniti instituciju s aktivnim razmjenama.',
+      updateSuccess: 'Institucija uspješno ažurirana.',
+      addSuccess: 'Institucija uspješno dodana.'
+    }
   },
   exchange: {
     title: 'Postavljanje razmjene',

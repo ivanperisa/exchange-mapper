@@ -12,10 +12,12 @@ public class StudyProgramConfiguration : IEntityTypeConfiguration<StudyProgram>
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
         builder.Property(x => x.InstitutionId).HasColumnName("institution_id").IsRequired();
         builder.Property(x => x.Name).HasColumnName("name").IsRequired();
+        builder.Property(x => x.NameEn).HasColumnName("name_en").IsRequired();
         builder.Property(x => x.IscedCode).HasColumnName("isced_code").IsRequired();
+        builder.Property(x => x.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()").IsRequired();
 
         builder.HasOne(x => x.Institution)
             .WithMany(x => x.StudyPrograms)

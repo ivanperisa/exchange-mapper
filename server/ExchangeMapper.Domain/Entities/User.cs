@@ -10,10 +10,9 @@ public class User
     public string Name { get; set; } = string.Empty;
     public UserRole Role { get; set; }
     public bool IsOnboarded { get; set; }
-    public Guid? InstitutionId { get; set; }
-    public Guid? StudyProfileId { get; set; }
     public DateTime CreatedAt { get; set; }
 
-    public Institution? Institution { get; set; }
-    public StudyProfile? StudyProfile { get; set; }
+    public ICollection<UserInstitution> UserInstitutions { get; set; } = [];
+    public ICollection<Exchange> StudentExchanges { get; set; } = [];
+    public ICollection<MappingHistory> MappingHistoryChanges { get; set; } = [];
 }

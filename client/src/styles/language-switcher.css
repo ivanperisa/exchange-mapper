@@ -14,7 +14,7 @@
   border: 1px solid #c7d4e4;
   border-radius: 0.7rem;
   padding: 0.4rem 0.5rem;
-  background: #fff;
+  background: var(--color-light);
   color: #102136;
   cursor: pointer;
   font: inherit;
@@ -44,7 +44,7 @@
   list-style: none;
   border: 1px solid #c7d4e4;
   border-radius: 0.75rem;
-  background: #fff;
+  background: var(--color-light);
   box-shadow: 0 12px 24px rgb(16 33 54 / 14%);
   z-index: 60;
 }

@@ -18,4 +18,9 @@ public abstract class ApiController : ControllerBase
         var rawUserId = User.FindFirstValue("userId");
         return Guid.TryParse(rawUserId, out var parsedUserId) ? parsedUserId : null;
     }
+
+    protected string? GetCurrentRole()
+    {
+        return User.FindFirst(ClaimTypes.Role)?.Value;
+    }
 }

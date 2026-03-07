@@ -13,9 +13,10 @@ public static class UserMapper
         Name = user.Name,
         Role = user.Role.ToString(),
         IsOnboarded = user.IsOnboarded,
-        Institution = user.Institution?.ToInstitutionDto(),
-        StudyProgram = user.StudyProfile?.StudyProgram?.ToStudyProgramDto(),
-        StudyProfile = user.StudyProfile?.ToStudyProfileDto()
+        Institutions = user.UserInstitutions
+            .OrderBy(ui => ui.CreatedAt)
+            .Select(ui => ui.ToUserInstitutionDto())
+            .ToList()
     };
 
     public static AuthMeResponseDto ToUnauthenticatedDto() => new()

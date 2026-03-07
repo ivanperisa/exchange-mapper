@@ -39,6 +39,7 @@ function toggleLocale() {
 
         <nav class="hidden items-center gap-5 md:flex">
           <RouterLink to="/home" class="nav-link">{{ t('nav.home') }}</RouterLink>
+          <RouterLink to="/settings" class="nav-link">{{ t('nav.settings') }}</RouterLink>
           <RouterLink to="/exchange" class="nav-link">{{ t('nav.exchange') }}</RouterLink>
           <RouterLink to="/history" class="nav-link">{{ t('nav.history') }}</RouterLink>
         </nav>
